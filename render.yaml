@@ -2,8 +2,11 @@ services:
   - type: web
     name: task-management-api
     env: node
+    region: oregon
+    plan: free
     buildCommand: npm install && npx prisma generate
     startCommand: npm start
+    healthCheckPath: /healthz
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -13,11 +16,11 @@ services:
         generateValue: true
       - key: NODE_ENV
         value: production
-    healthCheckPath: /api-docs
     autoDeploy: true
 
 databases:
   - name: task-management-db
     databaseName: task_management_db
     user: task_management_user
-    plan: free 
+    plan: free
+    region: oregon 
