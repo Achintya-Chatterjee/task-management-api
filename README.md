@@ -29,6 +29,7 @@ task-management-api/
 │   ├── lib/          # Utility functions and configurations
 │   ├── middleware/   # Express middleware
 │   ├── routes/       # API routes
+│   ├── services/     # Business logic
 │   ├── types/        # TypeScript type definitions
 │   └── server.ts     # Application entry point
 ├── prisma/          # Database schema and migrations
@@ -105,7 +106,7 @@ yarn start
 ### Authentication
 
 #### Register User
-- **URL**: `/api/auth/register`
+- **URL**: `/auth/register`
 - **Method**: `POST`
 - **Body**:
   ```json
@@ -129,7 +130,7 @@ yarn start
   ```
 
 #### Login User
-- **URL**: `/api/auth/login`
+- **URL**: `/auth/login`
 - **Method**: `POST`
 - **Body**:
   ```json
@@ -154,7 +155,7 @@ yarn start
 ### Tasks
 
 #### Get All Tasks
-- **URL**: `/api/tasks`
+- **URL**: `/tasks`
 - **Method**: `GET`
 - **Headers**: `Authorization: Bearer <token>`
 - **Query Parameters**:
@@ -180,7 +181,7 @@ yarn start
   ```
 
 #### Get Task by ID
-- **URL**: `/api/tasks/:id`
+- **URL**: `/tasks/:id`
 - **Method**: `GET`
 - **Headers**: `Authorization: Bearer <token>`
 - **Response**:
@@ -203,7 +204,7 @@ yarn start
   ```
 
 #### Create Task
-- **URL**: `/api/tasks`
+- **URL**: `/tasks`
 - **Method**: `POST`
 - **Headers**: `Authorization: Bearer <token>`
 - **Body**:
@@ -237,7 +238,7 @@ yarn start
   ```
 
 #### Update Task
-- **URL**: `/api/tasks/:id`
+- **URL**: `/tasks/:id`
 - **Method**: `PUT`
 - **Headers**: `Authorization: Bearer <token>`
 - **Body**:
@@ -272,7 +273,7 @@ yarn start
   ```
 
 #### Delete Task
-- **URL**: `/api/tasks/:id`
+- **URL**: `/tasks/:id`
 - **Method**: `DELETE`
 - **Headers**: `Authorization: Bearer <token>`
 - **Response**:

@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import { AsyncRequestHandler } from '../types/express';
+import { AuthService } from '../services/authService';
 
 // Input validation schemas
 const registerSchema = z.object({
@@ -38,50 +39,15 @@ export const register: AsyncRequestHandler = async (
   next: NextFunction
 ) => {
   try {
-    // Validate input
-    const validatedData = registerSchema.parse(req.body);
-    const { name, email, password } = validatedData;
-
-    // Check if user already exists
-    const userExists = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (userExists) {
-      res.status(400).json({
-        message: 'User already exists',
-      });
-      return;
-    }
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-      },
-    });
-
-    // Generate token
-    const token = generateToken(String(user.id), user.email);
+    const result = await AuthService.register(req.body);
 
     res.status(201).json({
       message: 'User registered successfully',
       data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        token,
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        token: result.token,
       },
     });
   } catch (error) {
@@ -103,42 +69,15 @@ export const login: AsyncRequestHandler = async (
   next: NextFunction
 ) => {
   try {
-    // Validate input
-    const validatedData = loginSchema.parse(req.body);
-    const { email, password } = validatedData;
-
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (!user) {
-      res.status(401).json({
-        message: 'Invalid credentials',
-      });
-      return;
-    }
-
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      res.status(401).json({
-        message: 'Invalid credentials',
-      });
-      return;
-    }
-
-    // Generate token
-    const token = generateToken(String(user.id), user.email);
+    const result = await AuthService.login(req.body);
 
     res.json({
       message: 'Login successful',
       data: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        token,
+        id: result.user.id,
+        name: result.user.name,
+        email: result.user.email,
+        token: result.token,
       },
     });
   } catch (error) {

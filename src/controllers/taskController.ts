@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../lib/prisma';
-import { Prisma, TaskStatus, Priority } from '@prisma/client';
+import { TaskService } from '../services/taskService';
+import { TaskStatus, Priority } from '@prisma/client';
 
 // Get all tasks for logged-in user
 export const getAllTasks = async (
@@ -14,51 +14,19 @@ export const getAllTasks = async (
       throw new Error('Not authorized');
     }
 
-    // Pagination parameters
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
-
-    // Filter parameters
-    const status = req.query.status as TaskStatus | undefined;
-    const priority = req.query.priority as Priority | undefined;
-    const isArchived = req.query.isArchived === 'true';
-
-    // Sort parameters
-    const sortBy = (req.query.sortBy as string) || 'createdAt';
-    const sortOrder = (req.query.sortOrder as string) || 'desc';
-
-    // Build where clause
-    const where = {
-      userId: req.user.id,
-      ...(status && { status }),
-      ...(priority && { priority }),
-      isArchived,
-    };
-
-    // Get total count for pagination
-    const totalTasks = await prisma.task.count({ where });
-
-    // Get tasks with pagination and sorting
-    const tasks = await prisma.task.findMany({
-      where,
-      skip,
-      take: limit,
-      orderBy: {
-        [sortBy]: sortOrder,
-      },
+    const result = await TaskService.getAllTasks(req.user.id, {
+      page: parseInt(req.query.page as string) || 1,
+      limit: parseInt(req.query.limit as string) || 10,
+      status: req.query.status as TaskStatus | undefined,
+      priority: req.query.priority as Priority | undefined,
+      isArchived: req.query.isArchived === 'true',
+      sortBy: req.query.sortBy as string,
+      sortOrder: req.query.sortOrder as 'asc' | 'desc',
     });
 
-    // Return paginated response with success message
     res.json({
       message: 'Tasks fetched successfully',
-      tasks,
-      pagination: {
-        total: totalTasks,
-        page,
-        limit,
-        totalPages: Math.ceil(totalTasks / limit),
-      },
+      ...result,
     });
   } catch (error) {
     next(error);
@@ -77,30 +45,7 @@ export const getTaskById = async (
       throw new Error('Not authorized');
     }
 
-    const taskId = req.params.id;
-    
-    if (!taskId) {
-      res.status(400);
-      throw new Error('Invalid task ID');
-    }
-
-    const task = await prisma.task.findUnique({
-      where: {
-        id: taskId,
-      },
-    });
-
-    if (!task) {
-      res.status(404);
-      throw new Error('Task not found');
-    }
-
-    // Make sure the task belongs to the authenticated user
-    if (task.userId !== req.user.id) {
-      res.status(403);
-      throw new Error('Not authorized to access this task');
-    }
-
+    const task = await TaskService.getTaskById(req.params.id, req.user.id);
     res.json({
       message: 'Task fetched successfully',
       task,
@@ -129,16 +74,14 @@ export const createTask = async (
       throw new Error('Title is required');
     }
 
-    const task = await prisma.task.create({
-      data: {
-        title,
-        description,
-        status: status ? status as TaskStatus : TaskStatus.PENDING,
-        priority: priority ? priority as Priority : Priority.MEDIUM,
-        dueDate: dueDate ? new Date(dueDate) : null,
-        tags: tags || [],
-        userId: req.user.id,
-      },
+    const task = await TaskService.createTask({
+      title,
+      description,
+      status,
+      priority,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      tags,
+      userId: req.user.id,
     });
 
     res.status(201).json({
@@ -162,60 +105,21 @@ export const updateTask = async (
       throw new Error('Not authorized');
     }
 
-    const taskId = req.params.id;
     const { title, description, status, priority, dueDate, tags, isArchived } = req.body;
-    
-    if (!taskId) {
-      res.status(400);
-      throw new Error('Invalid task ID');
-    }
 
-    // Validate status if provided
-    if (status && !Object.values(TaskStatus).includes(status)) {
-      res.status(400);
-      throw new Error(`Invalid status. Must be one of: ${Object.values(TaskStatus).join(', ')}`);
-    }
-
-    // Validate priority if provided
-    if (priority && !Object.values(Priority).includes(priority)) {
-      res.status(400);
-      throw new Error(`Invalid priority. Must be one of: ${Object.values(Priority).join(', ')}`);
-    }
-
-    // Check if task exists and belongs to user
-    const existingTask = await prisma.task.findUnique({
-      where: {
-        id: taskId,
-      },
-    });
-
-    if (!existingTask) {
-      res.status(404);
-      throw new Error('Task not found');
-    }
-
-    if (existingTask.userId !== req.user.id) {
-      res.status(403);
-      throw new Error('Not authorized to update this task');
-    }
-
-    // Update task
-    const updatedTask = await prisma.task.update({
-      where: { id: taskId },
-      data: {
-        title: title !== undefined ? title : existingTask.title,
-        description: description !== undefined ? description : existingTask.description,
-        status: status !== undefined ? status : existingTask.status,
-        priority: priority !== undefined ? priority : existingTask.priority,
-        dueDate: dueDate !== undefined ? new Date(dueDate) : existingTask.dueDate,
-        tags: tags !== undefined ? tags : existingTask.tags,
-        isArchived: isArchived !== undefined ? isArchived : existingTask.isArchived,
-      },
+    const task = await TaskService.updateTask(req.params.id, req.user.id, {
+      title,
+      description,
+      status,
+      priority,
+      dueDate: dueDate ? new Date(dueDate) : undefined,
+      tags,
+      isArchived,
     });
 
     res.json({
       message: 'Task updated successfully',
-      task: updatedTask,
+      task,
     });
   } catch (error) {
     next(error);
@@ -234,35 +138,7 @@ export const deleteTask = async (
       throw new Error('Not authorized');
     }
 
-    const taskId = req.params.id;
-    
-    if (!taskId) {
-      res.status(400);
-      throw new Error('Invalid task ID');
-    }
-
-    // Check if task exists and belongs to user
-    const existingTask = await prisma.task.findUnique({
-      where: {
-        id: taskId,
-      },
-    });
-
-    if (!existingTask) {
-      res.status(404);
-      throw new Error('Task not found');
-    }
-
-    if (existingTask.userId !== req.user.id) {
-      res.status(403);
-      throw new Error('Not authorized to delete this task');
-    }
-
-    // Delete task
-    await prisma.task.delete({
-      where: { id: taskId },
-    });
-
+    await TaskService.deleteTask(req.params.id, req.user.id);
     res.json({ message: 'Task deleted successfully' });
   } catch (error) {
     next(error);
