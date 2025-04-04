@@ -12,6 +12,21 @@ A RESTful API for task management with user authentication built with Node.js, E
 - Rate limiting for authentication endpoints
 - PostgreSQL database with Prisma ORM
 - Docker support for database
+- Swagger/OpenAPI documentation
+
+## API Documentation
+
+The API documentation is available through Swagger UI. After starting the server, you can access it at:
+
+```
+http://localhost:3000/api-docs
+```
+
+The documentation includes:
+- Detailed endpoint descriptions
+- Request/response schemas
+- Authentication requirements
+- Example requests and responses
 
 ## Prerequisites
 
