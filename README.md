@@ -1,45 +1,24 @@
 # Task Management API
 
-A RESTful API for task management with user authentication built with Node.js, Express, TypeScript, and PostgreSQL with Prisma ORM.
+A RESTful API for managing tasks with user authentication, built with Node.js, Express, TypeScript, and PostgreSQL.
+
+## Live API
+- Production URL: https://task-management-api-t8a6.onrender.com
+- API Documentation: https://task-management-api-t8a6.onrender.com/api-docs
+- Health Check: https://task-management-api-t8a6.onrender.com/healthz
 
 ## Features
-
-- JWT Authentication
-- Task CRUD operations with pagination, filtering, and sorting
-- Secure password hashing
-- Input validation
-- Error handling
-- Rate limiting for authentication endpoints
-- PostgreSQL database with Prisma ORM
-- Docker support for database
+- User authentication with JWT
+- CRUD operations for tasks
+- Task filtering and pagination
 - Swagger/OpenAPI documentation
+- Rate limiting for auth endpoints
 - Health check endpoint
 - Production-ready deployment configuration
-
-## API Documentation
-
-The API documentation is available through Swagger UI. After starting the server, you can access it at:
-
-```
-http://localhost:3000/api-docs
-```
-
-The documentation includes:
-- Detailed endpoint descriptions
-- Request/response schemas
-- Authentication requirements
-- Example requests and responses
-
-## Prerequisites
-
-- Node.js (v18 or higher)
-- Docker and Docker Compose
-- npm or yarn
-- Git
-- PostgreSQL
+- PostgreSQL database with Prisma ORM
+- Docker support for local development
 
 ## Project Structure
-
 ```
 task-management-api/
 ├── src/
@@ -56,26 +35,33 @@ task-management-api/
 └── package.json     # Project dependencies
 ```
 
-## Installation
+## Local Development
+
+### Prerequisites
+- Node.js (v18 or higher)
+- Docker and Docker Compose (for local database)
+- npm or yarn
+- Git
+
+### Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/Achintya-Chatterjee/task-management-api.git
+git clone https://github.com/yourusername/task-management-api.git
 cd task-management-api
 ```
 
 2. Install dependencies:
 ```bash
 npm install
-# or
-yarn install
 ```
 
-3. Create a `.env` file based on `.env.example` and fill in your database credentials and JWT secret:
-```
+3. Create a `.env` file based on `.env.example`:
+```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/task_management_db?schema=public"
 JWT_SECRET="your-secret-key"
 PORT=3000
+NODE_ENV=development
 ```
 
 4. Start the PostgreSQL database using Docker:
@@ -83,320 +69,124 @@ PORT=3000
 docker-compose up -d
 ```
 
-5. Generate Prisma client:
+5. Generate Prisma client and run migrations:
 ```bash
 npx prisma generate
-```
-
-6. Run database migrations:
-```bash
 npx prisma migrate dev
 ```
 
-7. Start the development server:
+6. Start the development server:
 ```bash
 npm run dev
-# or
-yarn dev
-```
-
-## Database Setup
-
-The project uses PostgreSQL running in a Docker container. The database configuration is managed through Docker Compose, which sets up:
-- PostgreSQL 16 (Alpine-based for smaller size)
-- Persistent volume for data storage
-- Health checks for container monitoring
-- Automatic container restart
-
-## Running the API
-
-### Development Mode
-```bash
-npm run dev
-# or
-yarn dev
-```
-
-### Production Mode
-```bash
-npm run build
-npm start
-# or
-yarn build
-yarn start
 ```
 
 ## API Endpoints
 
 ### Authentication
-
-#### Register User
-- **URL**: `/auth/register`
-- **Method**: `POST`
-- **Body**:
+- `POST /auth/register` - Register a new user
   ```json
   {
     "name": "John Doe",
     "email": "john@example.com",
-    "password": "password123"
+    "password": "securepassword123"
   }
   ```
-- **Response**:
-  ```json
-  {
-    "message": "User registered successfully",
-    "data": {
-      "id": "uuid",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "token": "your-jwt-token"
-    }
-  }
-  ```
-
-#### Login User
-- **URL**: `/auth/login`
-- **Method**: `POST`
-- **Body**:
+- `POST /auth/login` - Login user
   ```json
   {
     "email": "john@example.com",
-    "password": "password123"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "message": "Login successful",
-    "data": {
-      "id": "uuid",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "token": "your-jwt-token"
-    }
+    "password": "securepassword123"
   }
   ```
 
 ### Tasks
+- `GET /tasks` - Get all tasks (with pagination and filtering)
+  - Query parameters:
+    - `page`: Page number (default: 1)
+    - `limit`: Items per page (default: 10)
+    - `status`: Filter by status (PENDING, IN_PROGRESS, COMPLETED, CANCELLED)
+    - `priority`: Filter by priority (LOW, MEDIUM, HIGH, URGENT)
+    - `isArchived`: Filter by archived status
+    - `sortBy`: Field to sort by (default: createdAt)
+    - `sortOrder`: Sort order (asc, desc)
 
-#### Get All Tasks
-- **URL**: `/tasks`
-- **Method**: `GET`
-- **Headers**: `Authorization: Bearer <token>`
-- **Query Parameters**:
-  - `page` (optional): Page number (default: 1)
-  - `limit` (optional): Items per page (default: 10)
-  - `status` (optional): Filter by status (PENDING, IN_PROGRESS, COMPLETED, CANCELLED)
-  - `priority` (optional): Filter by priority (LOW, MEDIUM, HIGH, URGENT)
-  - `isArchived` (optional): Filter by archived status (true/false)
-  - `sortBy` (optional): Field to sort by (default: createdAt)
-  - `sortOrder` (optional): Sort order (asc/desc, default: desc)
-- **Response**:
+- `GET /tasks/:id` - Get a specific task
+- `POST /tasks` - Create a new task
   ```json
   {
-    "message": "Tasks fetched successfully",
-    "tasks": [...],
-    "pagination": {
-      "total": 100,
-      "page": 1,
-      "limit": 10,
-      "totalPages": 10
-    }
-  }
-  ```
-
-#### Get Task by ID
-- **URL**: `/tasks/:id`
-- **Method**: `GET`
-- **Headers**: `Authorization: Bearer <token>`
-- **Response**:
-  ```json
-  {
-    "message": "Task fetched successfully",
-    "task": {
-      "id": "uuid",
-      "title": "Task title",
-      "description": "Task description",
-      "status": "PENDING",
-      "priority": "MEDIUM",
-      "dueDate": "2024-04-03T12:00:00Z",
-      "tags": ["tag1", "tag2"],
-      "isArchived": false,
-      "createdAt": "2024-04-03T12:00:00Z",
-      "updatedAt": "2024-04-03T12:00:00Z"
-    }
-  }
-  ```
-
-#### Create Task
-- **URL**: `/tasks`
-- **Method**: `POST`
-- **Headers**: `Authorization: Bearer <token>`
-- **Body**:
-  ```json
-  {
-    "title": "Task title",
-    "description": "Task description",
+    "title": "Complete project",
+    "description": "Finish the task management API",
     "status": "PENDING",
-    "priority": "MEDIUM",
-    "dueDate": "2024-04-03T12:00:00Z",
-    "tags": ["tag1", "tag2"]
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "message": "Task created successfully",
-    "task": {
-      "id": "uuid",
-      "title": "Task title",
-      "description": "Task description",
-      "status": "PENDING",
-      "priority": "MEDIUM",
-      "dueDate": "2024-04-03T12:00:00Z",
-      "tags": ["tag1", "tag2"],
-      "isArchived": false,
-      "createdAt": "2024-04-03T12:00:00Z",
-      "updatedAt": "2024-04-03T12:00:00Z"
-    }
-  }
-  ```
-
-#### Update Task
-- **URL**: `/tasks/:id`
-- **Method**: `PUT`
-- **Headers**: `Authorization: Bearer <token>`
-- **Body**:
-  ```json
-  {
-    "title": "Updated title",
-    "description": "Updated description",
-    "status": "IN_PROGRESS",
     "priority": "HIGH",
-    "dueDate": "2024-04-04T12:00:00Z",
-    "tags": ["tag1", "tag3"],
-    "isArchived": false
+    "dueDate": "2024-04-10T00:00:00Z",
+    "tags": ["api", "backend"]
   }
   ```
-- **Response**:
-  ```json
-  {
-    "message": "Task updated successfully",
-    "task": {
-      "id": "uuid",
-      "title": "Updated title",
-      "description": "Updated description",
-      "status": "IN_PROGRESS",
-      "priority": "HIGH",
-      "dueDate": "2024-04-04T12:00:00Z",
-      "tags": ["tag1", "tag3"],
-      "isArchived": false,
-      "createdAt": "2024-04-03T12:00:00Z",
-      "updatedAt": "2024-04-03T12:00:00Z"
-    }
-  }
-  ```
-
-#### Delete Task
-- **URL**: `/tasks/:id`
-- **Method**: `DELETE`
-- **Headers**: `Authorization: Bearer <token>`
-- **Response**:
-  ```json
-  {
-    "message": "Task deleted successfully"
-  }
-  ```
-
-## Health Check
-- **URL**: `/healthz`
-- **Method**: `GET`
-- **Response**:
-  ```json
-  {
-    "status": "OK"
-  }
-  ```
+- `PUT /tasks/:id` - Update a task
+- `DELETE /tasks/:id` - Delete a task
 
 ## Testing with Postman
 
-1. Import the `Task-Management-API.postman_collection.json` file into Postman
-2. Create a new environment in Postman and add a variable named `token`
-3. First, use the Register or Login endpoint to get a JWT token
-4. Copy the token from the response and set it in your Postman environment
-5. Now you can test all task endpoints with the token
+### Local Testing
+1. Import the Postman collection
+2. Use the `Development` environment with base URL: `http://localhost:3000`
 
-## Deployment
+### Production Testing
+1. Create a new environment in Postman called "Production"
+2. Set the following variables:
+   - `baseUrl`: `https://task-management-api-t8a6.onrender.com`
+   - `token`: Leave empty (will be filled after login)
 
-### Deploying to Render
+3. Test Flow:
+   a. Register a new user (POST `/auth/register`)
+   b. Login (POST `/auth/login`)
+   c. Copy the JWT token from the login response
+   d. Set the token in your Postman environment
+   e. Test other endpoints with the token
 
-1. Create a new PostgreSQL database on Render:
-   - Go to [render.com](https://render.com)
-   - Click "New +" and select "PostgreSQL"
-   - Configure:
-     - Name: `task-management-db`
-     - Database: `task_management_db`
-     - User: `task_management_user`
-     - Region: Oregon
-     - Plan: Free
+Example Postman Request Headers:
+```
+Authorization: Bearer <your-jwt-token>
+Content-Type: application/json
+```
 
-2. Create a new Web Service:
-   - Click "New +" and select "Web Service"
-   - Connect your GitHub repository
-   - Configure:
-     - Name: `task-management-api`
-     - Environment: Node
-     - Region: Oregon
-     - Plan: Free
-     - Build Command: `npm install && npx prisma generate`
-     - Start Command: `npm start`
-     - Health Check Path: `/healthz`
-
-3. Add Environment Variables:
-   - `DATABASE_URL` (from your PostgreSQL database)
-   - `JWT_SECRET` (generate a secure random string)
-   - `NODE_ENV=production`
-
-4. Add Pre-Deploy Command:
-   - `npx prisma migrate deploy`
-
-5. Deploy:
-   - Click "Create Web Service"
-   - Wait for the deployment to complete
-   - Your API will be available at the provided URL
-
-## Development
+## Development Tools
 
 ### Available Scripts
-
-- `npm run dev` - Start the development server with hot reload
-- `npm run build` - Build the TypeScript code
-- `npm start` - Start the production server
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
 - `npm run lint` - Run ESLint
-- `npx prisma studio` - Open Prisma Studio for database management
 - `npm test` - Run tests
 - `npm run format` - Format code
+- `npx prisma studio` - Open Prisma Studio (http://localhost:5555)
 
-### Development Tools
+### Docker Commands
+```bash
+# Start containers
+docker-compose up -d
 
-- **Prisma Studio**: Visual database management tool
-  ```bash
-  npx prisma studio
-  ```
-  Access at: http://localhost:5555
+# Stop containers
+docker-compose down
 
-- **Docker Commands**:
-  ```bash
-  # Start containers
-  docker-compose up -d
-  
-  # Stop containers
-  docker-compose down
-  
-  # View logs
-  docker-compose logs -f
-  ```
+# View logs
+docker-compose logs -f
+```
+
+## Deployment Status
+- ✅ API Server: Running
+- ✅ Database: PostgreSQL on Render
+- ✅ Documentation: Swagger UI
+- ✅ Health Check: Active
+- ✅ Authentication: Working
+- ✅ Task Management: Working
+
+## Support
+For any issues or questions, please:
+1. Check the API documentation at `/api-docs`
+2. Use the health check endpoint at `/healthz`
+3. Ensure proper authentication headers are set
+4. Verify request payload matches the schema
 
 ## License
-
 MIT

@@ -7,6 +7,7 @@ services:
     buildCommand: npm install && npx prisma generate && npm run build
     startCommand: npm start
     healthCheckPath: /healthz
+    preDeployCommand: npx prisma migrate deploy
     envVars:
       - key: DATABASE_URL
         fromDatabase:

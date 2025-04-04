@@ -14,9 +14,13 @@ const options: swaggerJsdoc.Options = {
     },
     servers: [
       {
+        url: 'https://task-management-api-t8a6.onrender.com',
+        description: 'Production server',
+      },
+      {
         url: 'http://localhost:3000',
         description: 'Development server',
-      },
+      }
     ],
     components: {
       securitySchemes: {
@@ -93,7 +97,7 @@ const options: swaggerJsdoc.Options = {
       bearerAuth: [],
     }],
   },
-  apis: ['./src/routes/*.ts', './src/controllers/*.ts'], 
+  apis: ['./src/routes/*.ts'],
 };
 
 export const swaggerSpec = swaggerJsdoc(options); 
