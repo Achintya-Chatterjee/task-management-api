@@ -13,6 +13,8 @@ A RESTful API for task management with user authentication built with Node.js, E
 - PostgreSQL database with Prisma ORM
 - Docker support for database
 - Swagger/OpenAPI documentation
+- Health check endpoint
+- Production-ready deployment configuration
 
 ## API Documentation
 
@@ -30,10 +32,11 @@ The documentation includes:
 
 ## Prerequisites
 
-- Node.js (v14+ recommended)
+- Node.js (v18 or higher)
 - Docker and Docker Compose
 - npm or yarn
 - Git
+- PostgreSQL
 
 ## Project Structure
 
@@ -88,6 +91,13 @@ npx prisma generate
 6. Run database migrations:
 ```bash
 npx prisma migrate dev
+```
+
+7. Start the development server:
+```bash
+npm run dev
+# or
+yarn dev
 ```
 
 ## Database Setup
@@ -298,6 +308,16 @@ yarn start
   }
   ```
 
+## Health Check
+- **URL**: `/healthz`
+- **Method**: `GET`
+- **Response**:
+  ```json
+  {
+    "status": "OK"
+  }
+  ```
+
 ## Testing with Postman
 
 1. Import the `Task-Management-API.postman_collection.json` file into Postman
@@ -308,7 +328,42 @@ yarn start
 
 ## Deployment
 
-This API can be deployed to platforms like Render, Railway, Heroku, or any other platform that supports Node.js applications.
+### Deploying to Render
+
+1. Create a new PostgreSQL database on Render:
+   - Go to [render.com](https://render.com)
+   - Click "New +" and select "PostgreSQL"
+   - Configure:
+     - Name: `task-management-db`
+     - Database: `task_management_db`
+     - User: `task_management_user`
+     - Region: Oregon
+     - Plan: Free
+
+2. Create a new Web Service:
+   - Click "New +" and select "Web Service"
+   - Connect your GitHub repository
+   - Configure:
+     - Name: `task-management-api`
+     - Environment: Node
+     - Region: Oregon
+     - Plan: Free
+     - Build Command: `npm install && npx prisma generate`
+     - Start Command: `npm start`
+     - Health Check Path: `/healthz`
+
+3. Add Environment Variables:
+   - `DATABASE_URL` (from your PostgreSQL database)
+   - `JWT_SECRET` (generate a secure random string)
+   - `NODE_ENV=production`
+
+4. Add Pre-Deploy Command:
+   - `npx prisma migrate deploy`
+
+5. Deploy:
+   - Click "Create Web Service"
+   - Wait for the deployment to complete
+   - Your API will be available at the provided URL
 
 ## Development
 
@@ -319,6 +374,8 @@ This API can be deployed to platforms like Render, Railway, Heroku, or any other
 - `npm start` - Start the production server
 - `npm run lint` - Run ESLint
 - `npx prisma studio` - Open Prisma Studio for database management
+- `npm test` - Run tests
+- `npm run format` - Format code
 
 ### Development Tools
 
