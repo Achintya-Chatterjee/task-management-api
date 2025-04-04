@@ -13,6 +13,7 @@ services:
         fromDatabase:
           name: task-management-db
           property: connectionString
+          suffix: ?connection_limit=5
       - key: JWT_SECRET
         generateValue: true
       - key: NODE_ENV
@@ -21,7 +22,7 @@ services:
 
 databases:
   - name: task-management-db
-    databaseName: task_management_db
+    databaseName: task_management_db_jid0
     user: task_management_user
     plan: free
     region: oregon 

@@ -7,6 +7,53 @@ A RESTful API for managing tasks with user authentication, built with Node.js, E
 - API Documentation: https://task-management-api-t8a6.onrender.com/api-docs
 - Health Check: https://task-management-api-t8a6.onrender.com/healthz
 
+## Postman Collections
+
+### Development Collection
+Download: [Task-Management-API-Dev.postman_collection.json](./postman/Task-Management-API-Dev.postman_collection.json)
+
+Environment variables for development:
+```json
+{
+  "baseUrl": "http://localhost:3000",
+  "token": ""
+}
+```
+
+### Production Collection
+Download: [Task-Management-API-Prod.postman_collection.json](./postman/Task-Management-API-Prod.postman_collection.json)
+
+Environment variables for production:
+```json
+{
+  "baseUrl": "https://task-management-api-t8a6.onrender.com",
+  "token": ""
+}
+```
+
+### Testing Steps
+1. Import the appropriate collection (Dev/Prod)
+2. Import the environment variables
+3. Register a new user:
+   ```json
+   POST {{baseUrl}}/auth/register
+   {
+     "name": "Test User",
+     "email": "test@example.com",
+     "password": "securepassword123"
+   }
+   ```
+4. Login and copy the token:
+   ```json
+   POST {{baseUrl}}/auth/login
+   {
+     "email": "test@example.com",
+     "password": "securepassword123"
+   }
+   ```
+5. Set the token in your environment
+6. Test other endpoints
+
 ## Features
 - User authentication with JWT
 - CRUD operations for tasks
