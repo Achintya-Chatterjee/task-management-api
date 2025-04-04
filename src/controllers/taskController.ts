@@ -170,6 +170,18 @@ export const updateTask = async (
       throw new Error('Invalid task ID');
     }
 
+    // Validate status if provided
+    if (status && !Object.values(TaskStatus).includes(status)) {
+      res.status(400);
+      throw new Error(`Invalid status. Must be one of: ${Object.values(TaskStatus).join(', ')}`);
+    }
+
+    // Validate priority if provided
+    if (priority && !Object.values(Priority).includes(priority)) {
+      res.status(400);
+      throw new Error(`Invalid priority. Must be one of: ${Object.values(Priority).join(', ')}`);
+    }
+
     // Check if task exists and belongs to user
     const existingTask = await prisma.task.findUnique({
       where: {
@@ -193,8 +205,8 @@ export const updateTask = async (
       data: {
         title: title !== undefined ? title : existingTask.title,
         description: description !== undefined ? description : existingTask.description,
-        status: status !== undefined ? status as TaskStatus : existingTask.status,
-        priority: priority !== undefined ? priority as Priority : existingTask.priority,
+        status: status !== undefined ? status : existingTask.status,
+        priority: priority !== undefined ? priority : existingTask.priority,
         dueDate: dueDate !== undefined ? new Date(dueDate) : existingTask.dueDate,
         tags: tags !== undefined ? tags : existingTask.tags,
         isArchived: isArchived !== undefined ? isArchived : existingTask.isArchived,
